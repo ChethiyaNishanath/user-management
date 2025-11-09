@@ -14,6 +14,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.6 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
+	github.com/stretchr/testify v1.11.1 // indirect
 	golang.org/x/crypto v0.42.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect

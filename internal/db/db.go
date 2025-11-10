@@ -3,61 +3,67 @@ package db
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-var pool *sql.DB
+func Connect(connStr string) *sql.DB {
+	const (
+		maxRetries = 5
+		retryDelay = 3 * time.Second
+	)
 
-const (
-	HOST     = "localhost"
-	PORT     = 5432
-	DB       = "usermanagementdb"
-	SSL_MODE = "disable"
-)
+	var pool *sql.DB
+	var err error
 
-func Connect() *sql.DB {
-	connStr := "postgres://postgres:Test1234@localhost:5432/usermanagementdb?sslmode=disable"
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		pool, err = sql.Open("pgx", connStr)
+		if err != nil {
+			slog.Error("Failed to open DB connection", "attempt", attempt, "error", err)
+			time.Sleep(retryDelay)
+			continue
+		}
 
-	pool, err := sql.Open("pgx", connStr)
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		if err = pool.PingContext(ctx); err == nil {
+			slog.Info("Connected to PostgreSQL", "attempt", attempt)
+			break
+		}
+
+		slog.Warn("Database not ready, retrying...", "attempt", attempt, "error", err)
+		time.Sleep(retryDelay)
+	}
+
 	if err != nil {
-		panic(fmt.Sprintf("Error opening DB: %v", err))
+		slog.Error("Unable to connect to PostgreSQL after retries", "error", err)
+		panic(err)
 	}
 
-	pool.SetConnMaxLifetime(0)
-	pool.SetMaxIdleConns(3)
-	pool.SetMaxOpenConns(3)
+	pool.SetConnMaxLifetime(time.Hour)
+	pool.SetMaxIdleConns(5)
+	pool.SetMaxOpenConns(10)
 
-	ctx, stop := context.WithCancel(context.Background())
-	defer stop()
+	go handleShutdown(pool)
 
-	appSignal := make(chan os.Signal, 3)
-	signal.Notify(appSignal, os.Interrupt)
-
-	go func() {
-		<-appSignal
-		stop()
-		pool.Close()
-	}()
-
-	if err := pool.PingContext(ctx); err != nil {
-		slog.Error("unable to connect to database", "error", err)
-	}
-
-	slog.Info("Connected to PostgreSQL")
 	return pool
 }
 
-func Ping(ctx context.Context) {
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
-	defer cancel()
+func handleShutdown(pool *sql.DB) {
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
 
-	if err := pool.PingContext(ctx); err != nil {
-		slog.Error("unable to connect to database", "error", err)
+	<-signalChan
+	slog.Info("Shutting down database connection...")
+	if err := pool.Close(); err != nil {
+		slog.Error("Error closing DB connection", "error", err)
+	} else {
+		slog.Info("Database connection closed.")
 	}
 }

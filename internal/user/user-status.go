@@ -23,12 +23,12 @@ func (s UserStatus) String() string {
 
 func ParseUserStatus(s string) (UserStatus, error) {
 	switch s {
-	case string(rune(Active)):
+	case "Active":
 		return Active, nil
-	case string(rune(InActive)):
+	case "InActive":
 		return InActive, nil
 	}
-	return 0, nil
+	return 0, fmt.Errorf("invalid user status: %s", s)
 }
 
 func (s UserStatus) MarshalJSON() ([]byte, error) {

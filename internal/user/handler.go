@@ -7,7 +7,6 @@ import (
 	"net/http"
 	httputils "user-management/internal/common/httputils"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -56,8 +55,14 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetUserById(w http.ResponseWriter, r *http.Request) {
-	userId := chi.URLParam(r, "id")
-	users, err := h.service.GetUserById(r.Context(), userId)
+
+	userId, uuiderr := httputils.ParseUUIDFromURL(r, "id")
+	if uuiderr != nil {
+		http.Error(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	users, err := h.service.GetUserById(r.Context(), userId.String())
 	if err != nil {
 		slog.Warn(fmt.Sprintf("User not found with id: %s", userId))
 		httputils.WriteError(w, http.StatusNotFound, "User not found", r)
@@ -85,7 +90,11 @@ func (h *Handler) GetUsers(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) UpdateUserById(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	userId := chi.URLParam(r, "id")
+	userId, uuiderr := httputils.ParseUUIDFromURL(r, "id")
+	if uuiderr != nil {
+		http.Error(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
 
 	var req UserUpdateRequest
 	if err := httputils.DecodeAndValidateRequest(r, &req, h.validate); err != nil {
@@ -94,7 +103,7 @@ func (h *Handler) UpdateUserById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatedUser, err := h.service.UpdateUser(r.Context(), userId, &req)
+	updatedUser, err := h.service.UpdateUser(r.Context(), userId.String(), &req)
 
 	if err != nil {
 		slog.Warn("User update failed", "error", err)
@@ -108,8 +117,14 @@ func (h *Handler) UpdateUserById(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteUserById(w http.ResponseWriter, r *http.Request) {
-	userId := chi.URLParam(r, "id")
-	err := h.service.DeleteUserById(r.Context(), userId)
+
+	userId, uuiderr := httputils.ParseUUIDFromURL(r, "id")
+	if uuiderr != nil {
+		http.Error(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	err := h.service.DeleteUserById(r.Context(), userId.String())
 	if err != nil {
 		httputils.WriteError(w, http.StatusNotFound, "Failed to fetch users", r)
 		return

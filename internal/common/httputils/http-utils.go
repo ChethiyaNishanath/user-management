@@ -6,7 +6,9 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 )
 
 func DecodeAndValidateRequest(r *http.Request, dest interface{}, v *validator.Validate) error {
@@ -52,4 +54,9 @@ func ConvertValidationErrors(err error) []FieldError {
 	}
 
 	return fieldErrors
+}
+
+func ParseUUIDFromURL(r *http.Request, paramName string) (uuid.UUID, error) {
+	paramValue := chi.URLParam(r, paramName)
+	return uuid.Parse(paramValue)
 }

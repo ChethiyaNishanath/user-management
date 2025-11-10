@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:14-trixie
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Test12344
+      POSTGRES_DB: usermanagementdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./internal/queries/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d usermanagementdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  migrate:
+    image: migrate/migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./internal/db/migrations:/migrations
+    command: ["-path=/migrations", "-database=postgres://postgres:Test12344@postgres:5432/usermanagementdb?sslmode=disable", "up"]
+  
+  user-management-app:
+    build: .
+    container_name: user-management-running-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      PORT: 8080
+      SHUTDOWN_TIMEOUT: 10
+      DB_DSN: postgres://postgres:Test12344@postgres:5432/usermanagementdb?sslmode=disable
+    ports:
+      - "8080:8080"
+    restart: always

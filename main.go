@@ -14,9 +14,25 @@ import (
 	"user-management/internal/config"
 	"user-management/internal/db"
 
+	_ "user-management/docs"
+
 	"github.com/go-chi/chi/v5"
 )
 
+// @title User Management API
+// @version 1.0
+// @description This is User Management server.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name Chethiya Viharagama
+// @contact.url http://www.swagger.io/support
+// @contact.email chethiya.viharagama@yaalalabs.com
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost
+// @BasePath /
 func main() {
 
 	config := config.Load()

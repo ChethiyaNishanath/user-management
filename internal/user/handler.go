@@ -22,6 +22,16 @@ func NewHandler(service *Service, validate *validator.Validate) *Handler {
 	}
 }
 
+// CreateUser godoc
+// @Summary Create a new user
+// @Description Create a new user
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} User
+// @Failure      400  {object}  httputils.ErrorResponse
+// @Failure      500  {object}  httputils.ErrorResponse
+// @Router /users [post]
 func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
@@ -54,6 +64,17 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
+// GetUserById godoc
+// @Summary Get user by id
+// @Description Get user details by id
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} User
+// @Failure      400  {object}  httputils.ErrorResponse
+// @Failure      404  {object}  httputils.ErrorResponse
+// @Failure      500  {object}  httputils.ErrorResponse
+// @Router /users/{id} [get]
 func (h *Handler) GetUserById(w http.ResponseWriter, r *http.Request) {
 
 	userId, uuiderr := httputils.ParseUUIDFromURL(r, "id")
@@ -74,6 +95,16 @@ func (h *Handler) GetUserById(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(users)
 }
 
+// GetUsers godoc
+// @Summary Get all users
+// @Description Get all users
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Success 200 {array} User
+// @Failure      404  {object}  httputils.ErrorResponse
+// @Failure      500  {object}  httputils.ErrorResponse
+// @Router /users [get]
 func (h *Handler) GetUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := h.service.ListUsers(r.Context())
 	if err != nil {
@@ -87,12 +118,23 @@ func (h *Handler) GetUsers(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(users)
 }
 
+// UpdateUserById godoc
+// @Summary Update user
+// @Description Update an user by id
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} User
+// @Failure      400  {object}  httputils.ErrorResponse
+// @Failure      404  {object}  httputils.ErrorResponse
+// @Failure      500  {object}  httputils.ErrorResponse
+// @Router /users/{id} [patch]
 func (h *Handler) UpdateUserById(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	userId, uuiderr := httputils.ParseUUIDFromURL(r, "id")
 	if uuiderr != nil {
-		http.Error(w, "Invalid user ID format", http.StatusBadRequest)
+		http.Error(w, "Invalid user ID format", http.StatusNotFound)
 		return
 	}
 
@@ -116,6 +158,14 @@ func (h *Handler) UpdateUserById(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(updatedUser)
 }
 
+// DeleteUser godoc
+// @Summary Delete a user
+// @Description Delete an existing user by id
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Success 204
+// @Router /users/{id} [delete]
 func (h *Handler) DeleteUserById(w http.ResponseWriter, r *http.Request) {
 
 	userId, uuiderr := httputils.ParseUUIDFromURL(r, "id")

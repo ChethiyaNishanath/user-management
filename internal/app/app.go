@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type App struct {
@@ -37,6 +38,8 @@ func NewApp(db *sql.DB) *App {
 }
 
 func (a *App) RegisterRoutes(r chi.Router) {
+
+	r.Get("/swagger/*", httpSwagger.WrapHandler)
 
 	r.Route("/users", func(r chi.Router) {
 		r.Post("/", a.UserHandler.CreateUser)

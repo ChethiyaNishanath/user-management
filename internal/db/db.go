@@ -22,6 +22,9 @@ func Connect(connStr string) *sql.DB {
 	var err error
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
+
+		slog.Info("Connecting to database")
+
 		pool, err = sql.Open("pgx", connStr)
 		if err != nil {
 			slog.Error("Failed to open DB connection", "attempt", attempt, "error", err)

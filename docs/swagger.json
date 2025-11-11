@@ -15,7 +15,6 @@
         },
         "version": "1.0"
     },
-    "host": "localhost",
     "basePath": "/",
     "paths": {
         "/users": {
@@ -102,6 +101,15 @@
                     "users"
                 ],
                 "summary": "Get user by id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -141,6 +149,15 @@
                     "users"
                 ],
                 "summary": "Delete a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "204": {
                         "description": "No Content"
@@ -159,6 +176,15 @@
                     "users"
                 ],
                 "summary": "Update user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",

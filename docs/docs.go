@@ -108,6 +108,15 @@ const docTemplate = `{
                     "users"
                 ],
                 "summary": "Get user by id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -147,6 +156,15 @@ const docTemplate = `{
                     "users"
                 ],
                 "summary": "Delete a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "204": {
                         "description": "No Content"
@@ -165,6 +183,15 @@ const docTemplate = `{
                     "users"
                 ],
                 "summary": "Update user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -284,7 +311,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost",
+	Host:             "",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "User Management API",

@@ -71,6 +71,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} User
+// @Param id path string true "User ID"
 // @Failure      400  {object}  httputils.ErrorResponse
 // @Failure      404  {object}  httputils.ErrorResponse
 // @Failure      500  {object}  httputils.ErrorResponse
@@ -124,6 +125,7 @@ func (h *Handler) GetUsers(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Accept  json
 // @Produce  json
+// @Param id path string true "User ID"
 // @Success 200 {object} User
 // @Failure      400  {object}  httputils.ErrorResponse
 // @Failure      404  {object}  httputils.ErrorResponse
@@ -164,6 +166,7 @@ func (h *Handler) UpdateUserById(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Accept  json
 // @Produce  json
+// @Param id path string true "User ID"
 // @Success 204
 // @Router /users/{id} [delete]
 func (h *Handler) DeleteUserById(w http.ResponseWriter, r *http.Request) {

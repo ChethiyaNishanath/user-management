@@ -57,7 +57,6 @@ definitions:
     x-enum-varnames:
     - Active
     - InActive
-host: localhost
 info:
   contact:
     email: chethiya.viharagama@yaalalabs.com
@@ -123,6 +122,12 @@ paths:
       consumes:
       - application/json
       description: Delete an existing user by id
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -135,6 +140,12 @@ paths:
       consumes:
       - application/json
       description: Get user details by id
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -161,6 +172,12 @@ paths:
       consumes:
       - application/json
       description: Update an user by id
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
       - application/json
       responses:

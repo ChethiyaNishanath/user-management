@@ -6,8 +6,8 @@ RETURNING *;
 -- name: FindUserById :one
 SELECT * FROM USERS WHERE USER_ID = $1 LIMIT 1;
 
--- name: ListAllUsers :many
-SELECT * FROM USERS;
+-- name: ListAllUsersPaged :many
+SELECT * FROM USERS LIMIT $1 OFFSET $2;
 
 -- name: DeleteUserByID :exec
 DELETE FROM USERS WHERE USER_ID = $1;

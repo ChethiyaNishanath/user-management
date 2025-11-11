@@ -29,8 +29,14 @@ func (r *Repository) Create(ctx context.Context, user *User) (sqlc.User, error) 
 	return r.queries.CreateUser(ctx, params)
 }
 
-func (r *Repository) GetAll(ctx context.Context) ([]sqlc.User, error) {
-	return r.queries.ListAllUsers(ctx)
+func (r *Repository) GetAllPaged(ctx context.Context, limit int, offset int) ([]sqlc.User, error) {
+
+	params := sqlc.ListAllUsersPagedParams{
+		Limit:  int32(limit),
+		Offset: int32(offset),
+	}
+
+	return r.queries.ListAllUsersPaged(ctx, params)
 }
 
 func (r *Repository) GetUserById(ctx context.Context, userId string) (sqlc.User, error) {

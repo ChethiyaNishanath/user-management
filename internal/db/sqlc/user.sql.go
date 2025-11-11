@@ -77,12 +77,17 @@ func (q *Queries) FindUserById(ctx context.Context, userID string) (User, error)
 	return i, err
 }
 
-const listAllUsers = `-- name: ListAllUsers :many
-SELECT user_id, first_name, last_name, email, phone, age, status FROM USERS
+const listAllUsersPaged = `-- name: ListAllUsersPaged :many
+SELECT user_id, first_name, last_name, email, phone, age, status FROM USERS LIMIT $1 OFFSET $2
 `
 
-func (q *Queries) ListAllUsers(ctx context.Context) ([]User, error) {
-	rows, err := q.db.QueryContext(ctx, listAllUsers)
+type ListAllUsersPagedParams struct {
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) ListAllUsersPaged(ctx context.Context, arg ListAllUsersPagedParams) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, listAllUsersPaged, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

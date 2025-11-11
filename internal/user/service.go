@@ -24,8 +24,8 @@ func (s *Service) CreateUser(ctx context.Context, u *User) (User, error) {
 	return FromSQLC(savedUser), nil
 }
 
-func (s *Service) ListUsers(ctx context.Context) ([]User, error) {
-	users, err := s.repo.GetAll(ctx)
+func (s *Service) ListUsersPaged(ctx context.Context, limit int, offset int) ([]User, error) {
+	users, err := s.repo.GetAllPaged(ctx, limit, offset)
 	if err != nil {
 		return nil, err
 	}

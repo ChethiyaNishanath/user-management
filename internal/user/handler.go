@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	httputils "user-management/internal/common/httputils"
+	"user-management/internal/middleware"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -102,12 +103,19 @@ func (h *Handler) GetUserById(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Accept  json
 // @Produce  json
+// @Param page query int false "Page number" default(1)
+// @Param limit query int false "Items per page" default(10)
 // @Success 200 {array} User
 // @Failure      404  {object}  httputils.ErrorResponse
 // @Failure      500  {object}  httputils.ErrorResponse
 // @Router /users [get]
 func (h *Handler) GetUsers(w http.ResponseWriter, r *http.Request) {
-	users, err := h.service.ListUsers(r.Context())
+
+	page := r.Context().Value(middleware.PageKey).(int)
+	limit := r.Context().Value(middleware.LimitKey).(int)
+	offset := (page - 1) * limit
+
+	users, err := h.service.ListUsersPaged(r.Context(), limit, offset)
 	if err != nil {
 		slog.Warn("Failed to fetch users")
 		httputils.WriteError(w, http.StatusNotFound, "Failed to fetch users", r)

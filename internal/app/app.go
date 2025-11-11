@@ -3,6 +3,7 @@ package app
 import (
 	"database/sql"
 	"user-management/internal/db/sqlc"
+	"user-management/internal/middleware"
 	"user-management/internal/user"
 	"user-management/internal/validation"
 
@@ -43,7 +44,7 @@ func (a *App) RegisterRoutes(r chi.Router) {
 
 	r.Route("/users", func(r chi.Router) {
 		r.Post("/", a.UserHandler.CreateUser)
-		r.Get("/", a.UserHandler.GetUsers)
+		r.With(middleware.Paginate).Get("/", a.UserHandler.GetUsers)
 		r.Get("/{id}", a.UserHandler.GetUserById)
 		r.Patch("/{id}", a.UserHandler.UpdateUserById)
 		r.Delete("/{id}", a.UserHandler.DeleteUserById)

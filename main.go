@@ -19,6 +19,7 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/httprate"
 )
 
 // @title User Management API
@@ -63,6 +64,8 @@ func main() {
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
+
+	r.Use(httprate.LimitByIP(100, 1*time.Minute))
 
 	newApp.RegisterRoutes(r)
 

@@ -128,7 +128,7 @@ func (h *Handler) GetUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateUserById godoc
-// @Summary Update user
+// @Summary Update user by id
 // @Description Update an user by id
 // @Tags users
 // @Accept  json
@@ -169,7 +169,7 @@ func (h *Handler) UpdateUserById(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteUser godoc
-// @Summary Delete a user
+// @Summary Delete user by id
 // @Description Delete an existing user by id
 // @Tags users
 // @Accept  json

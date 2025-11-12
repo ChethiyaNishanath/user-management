@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -36,6 +37,11 @@ func NullableFloat64(f float64) sql.NullString {
 
 func Float64ToString(f float64) string {
 	return strconv.FormatFloat(f, 'f', -1, 64)
+}
+
+func StringToFloat64(s string) (float64, error) {
+	s = strings.TrimSpace(s)
+	return strconv.ParseFloat(s, 64)
 }
 
 func NullableTime(s time.Time) sql.NullTime {

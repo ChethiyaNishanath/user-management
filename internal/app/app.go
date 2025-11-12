@@ -3,6 +3,7 @@ package app
 import (
 	"database/sql"
 	"user-management/internal/db/sqlc"
+	"user-management/internal/instrument"
 	"user-management/internal/middleware"
 	"user-management/internal/user"
 	"user-management/internal/validation"
@@ -17,7 +18,8 @@ type App struct {
 	Validator *validator.Validate
 	Queries   *sqlc.Queries
 
-	UserHandler *user.Handler
+	UserHandler       *user.Handler
+	InstrumentHandler *instrument.Handler
 }
 
 func NewApp(db *sql.DB) *App {
@@ -30,11 +32,16 @@ func NewApp(db *sql.DB) *App {
 	userService := user.NewService(userRepo)
 	userHandler := user.NewHandler(userService, validate)
 
+	instrumentRepo := instrument.NewRepository(queries)
+	instrumentService := instrument.NewService(instrumentRepo)
+	instrumentHandler := instrument.NewHandler(instrumentService, validate)
+
 	return &App{
-		DB:          db,
-		Validator:   validate,
-		Queries:     queries,
-		UserHandler: userHandler,
+		DB:                db,
+		Validator:         validate,
+		Queries:           queries,
+		UserHandler:       userHandler,
+		InstrumentHandler: instrumentHandler,
 	}
 }
 
@@ -48,5 +55,13 @@ func (a *App) RegisterRoutes(r chi.Router) {
 		r.Get("/{id}", a.UserHandler.GetUserById)
 		r.Patch("/{id}", a.UserHandler.UpdateUserById)
 		r.Delete("/{id}", a.UserHandler.DeleteUserById)
+	})
+
+	r.Route("/instruments", func(r chi.Router) {
+		r.Post("/", a.InstrumentHandler.CreateInstrument)
+		r.With(middleware.Paginate).Get("/", a.InstrumentHandler.GetInstruments)
+		r.Get("/{id}", a.InstrumentHandler.GetInstrumentById)
+		r.Patch("/{id}", a.InstrumentHandler.UpdateInstrumentById)
+		r.Delete("/{id}", a.InstrumentHandler.DeleteInstrumentById)
 	})
 }

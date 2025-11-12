@@ -24,6 +24,33 @@ definitions:
       message:
         type: string
     type: object
+  instrument.Instrument:
+    properties:
+      created_At:
+        type: string
+      exchange:
+        type: string
+      id:
+        type: string
+      last_price:
+        type: number
+      name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      symbol:
+        maxLength: 50
+        minLength: 2
+        type: string
+      type:
+        type: string
+      updated_At:
+        type: string
+    required:
+    - name
+    - symbol
+    - type
+    type: object
   user.User:
     properties:
       age:
@@ -70,6 +97,147 @@ info:
   title: User Management API
   version: "1.0"
 paths:
+  /instruments:
+    get:
+      consumes:
+      - application/json
+      description: Get all instruments
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/instrument.Instrument'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+      summary: Get all instruments
+      tags:
+      - instruments
+    post:
+      consumes:
+      - application/json
+      description: Create a new instrument
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/instrument.Instrument'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+      summary: Create a new instrument
+      tags:
+      - instruments
+  /instruments/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing instrument by id
+      parameters:
+      - description: Instrument ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Delete instrument by id
+      tags:
+      - instruments
+    get:
+      consumes:
+      - application/json
+      description: Get instrument details by id
+      parameters:
+      - description: Instrument ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/instrument.Instrument'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+      summary: Get instrument by id
+      tags:
+      - instruments
+    patch:
+      consumes:
+      - application/json
+      description: Update an instrument by id
+      parameters:
+      - description: Instrument ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/instrument.Instrument'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+      summary: Update instrument by id
+      tags:
+      - instruments
   /users:
     get:
       consumes:
@@ -144,7 +312,7 @@ paths:
       responses:
         "204":
           description: No Content
-      summary: Delete a user
+      summary: Delete user by id
       tags:
       - users
     get:
@@ -208,7 +376,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/common.ErrorResponse'
-      summary: Update user
+      summary: Update user by id
       tags:
       - users
 swagger: "2.0"

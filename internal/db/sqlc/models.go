@@ -4,8 +4,12 @@
 
 package sqlc
 
+import (
+	"github.com/google/uuid"
+)
+
 type User struct {
-	UserID    string
+	UserID    uuid.UUID
 	FirstName string
 	LastName  string
 	Email     string

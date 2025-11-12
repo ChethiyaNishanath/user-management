@@ -8,6 +8,8 @@ package sqlc
 import (
 	"context"
 	"database/sql"
+
+	"github.com/google/uuid"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -17,7 +19,7 @@ RETURNING user_id, first_name, last_name, email, phone, age, status
 `
 
 type CreateUserParams struct {
-	UserID    string
+	UserID    uuid.UUID
 	FirstName string
 	LastName  string
 	Email     string
@@ -53,7 +55,7 @@ const deleteUserByID = `-- name: DeleteUserByID :exec
 DELETE FROM USERS WHERE USER_ID = $1
 `
 
-func (q *Queries) DeleteUserByID(ctx context.Context, userID string) error {
+func (q *Queries) DeleteUserByID(ctx context.Context, userID uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, deleteUserByID, userID)
 	return err
 }
@@ -62,7 +64,7 @@ const findUserById = `-- name: FindUserById :one
 SELECT user_id, first_name, last_name, email, phone, age, status FROM USERS WHERE USER_ID = $1 LIMIT 1
 `
 
-func (q *Queries) FindUserById(ctx context.Context, userID string) (User, error) {
+func (q *Queries) FindUserById(ctx context.Context, userID uuid.UUID) (User, error) {
 	row := q.db.QueryRowContext(ctx, findUserById, userID)
 	var i User
 	err := row.Scan(
@@ -137,7 +139,7 @@ type UpdateUserParams struct {
 	Phone     sql.NullString
 	Age       sql.NullInt16
 	Status    sql.NullString
-	UserID    string
+	UserID    uuid.UUID
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {

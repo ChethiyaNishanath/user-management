@@ -48,13 +48,6 @@ func UpdatableUser(userId uuid.UUID, u *sqlc.User) (*User, error) {
 }
 
 func FromSQLC(u sqlc.User) User {
-
-	parsedUUID, err := uuid.Parse(u.UserID)
-	if err != nil {
-		slog.Error("Invalid UUID from DB", "error", err)
-		parsedUUID = uuid.Nil
-	}
-
 	parsedStatus, err := ParseUserStatus(u.Status)
 	if err != nil {
 		slog.Error("Invalid status from DB, defaulting to INACTIVE", "error", u.Status)
@@ -62,7 +55,7 @@ func FromSQLC(u sqlc.User) User {
 	}
 
 	return User{
-		UserId:    parsedUUID,
+		UserId:    u.UserID,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
 		Email:     u.Email,

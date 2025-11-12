@@ -2,8 +2,11 @@ package user
 
 import (
 	"context"
+	"log/slog"
 	"user-management/internal/common/converters"
 	"user-management/internal/db/sqlc"
+
+	"github.com/google/uuid"
 )
 
 type Repository struct {
@@ -17,7 +20,7 @@ func NewRepository(q *sqlc.Queries) *Repository {
 func (r *Repository) Create(ctx context.Context, user *User) (sqlc.User, error) {
 
 	params := sqlc.CreateUserParams{
-		UserID:    user.UserId.String(),
+		UserID:    user.UserId,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		Email:     user.Email,
@@ -40,7 +43,14 @@ func (r *Repository) GetAllPaged(ctx context.Context, limit int, offset int) ([]
 }
 
 func (r *Repository) GetUserById(ctx context.Context, userId string) (sqlc.User, error) {
-	return r.queries.FindUserById(ctx, userId)
+
+	parsedUUID, err := uuid.Parse(userId)
+	if err != nil {
+		slog.Error("Invalid UUID from DB", "error", err)
+		return sqlc.User{}, err
+	}
+
+	return r.queries.FindUserById(ctx, parsedUUID)
 }
 
 func (r *Repository) Update(ctx context.Context, user *User) (sqlc.User, error) {
@@ -52,12 +62,19 @@ func (r *Repository) Update(ctx context.Context, user *User) (sqlc.User, error) 
 		Phone:     converters.NullableString(user.Phone),
 		Age:       converters.NullableInt16(user.Age),
 		Status:    converters.NullableString(user.Status.String()),
-		UserID:    user.UserId.String(),
+		UserID:    user.UserId,
 	}
 
 	return r.queries.UpdateUser(ctx, parms)
 }
 
 func (r *Repository) Delete(ctx context.Context, userId string) error {
-	return r.queries.DeleteUserByID(ctx, userId)
+
+	parsedUUID, err := uuid.Parse(userId)
+	if err != nil {
+		slog.Error("Invalid UUID from DB", "error", err)
+		return err
+	}
+
+	return r.queries.DeleteUserByID(ctx, parsedUUID)
 }

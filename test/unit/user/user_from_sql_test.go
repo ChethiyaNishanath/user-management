@@ -14,7 +14,7 @@ func TestFromSQLC_ValidData(t *testing.T) {
 	validUUID := uuid.New()
 
 	sqlcUser := sqlc.User{
-		UserID:    validUUID.String(),
+		UserID:    validUUID,
 		FirstName: "John",
 		LastName:  "Doe",
 		Email:     "john.doe@example.com",
@@ -36,7 +36,7 @@ func TestFromSQLC_ValidData(t *testing.T) {
 
 func TestFromSQLC_InvalidUUID(t *testing.T) {
 	sqlcUser := sqlc.User{
-		UserID:    "invalid-uuid",
+		UserID:    uuid.Nil,
 		FirstName: "John",
 		LastName:  "Doe",
 		Email:     "john.doe@example.com",
@@ -52,28 +52,11 @@ func TestFromSQLC_InvalidUUID(t *testing.T) {
 	assert.Equal(t, user.Active, result.Status)
 }
 
-func TestFromSQLC_EmptyUUID(t *testing.T) {
-	sqlcUser := sqlc.User{
-		UserID:    "",
-		FirstName: "Jane",
-		LastName:  "Smith",
-		Email:     "jane@example.com",
-		Phone:     "+9876543210",
-		Age:       25,
-		Status:    "Active",
-	}
-
-	result := user.FromSQLC(sqlcUser)
-
-	assert.Equal(t, uuid.Nil, result.UserId)
-	assert.Equal(t, "Jane", result.FirstName)
-}
-
 func TestFromSQLC_InvalidStatus(t *testing.T) {
 	validUUID := uuid.New()
 
 	sqlcUser := sqlc.User{
-		UserID:    validUUID.String(),
+		UserID:    validUUID,
 		FirstName: "John",
 		LastName:  "Doe",
 		Email:     "john.doe@example.com",
@@ -92,7 +75,7 @@ func TestFromSQLC_EmptyStatus(t *testing.T) {
 	validUUID := uuid.New()
 
 	sqlcUser := sqlc.User{
-		UserID:    validUUID.String(),
+		UserID:    validUUID,
 		FirstName: "John",
 		LastName:  "Doe",
 		Email:     "john.doe@example.com",
@@ -110,7 +93,7 @@ func TestFromSQLC_InActiveStatus(t *testing.T) {
 	validUUID := uuid.New()
 
 	sqlcUser := sqlc.User{
-		UserID:    validUUID.String(),
+		UserID:    validUUID,
 		FirstName: "Jane",
 		LastName:  "Smith",
 		Email:     "jane@example.com",
@@ -125,30 +108,11 @@ func TestFromSQLC_InActiveStatus(t *testing.T) {
 	assert.Equal(t, user.InActive, result.Status)
 }
 
-func TestFromSQLC_BothInvalidUUIDAndStatus(t *testing.T) {
-	sqlcUser := sqlc.User{
-		UserID:    "not-a-uuid",
-		FirstName: "Test",
-		LastName:  "User",
-		Email:     "test@example.com",
-		Phone:     "+1111111111",
-		Age:       20,
-		Status:    "BadStatus",
-	}
-
-	result := user.FromSQLC(sqlcUser)
-
-	assert.Equal(t, uuid.Nil, result.UserId)
-	assert.Equal(t, user.InActive, result.Status)
-	assert.Equal(t, "Test", result.FirstName)
-	assert.Equal(t, "User", result.LastName)
-}
-
 func TestFromSQLC_SpecialCharactersInFields(t *testing.T) {
 	validUUID := uuid.New()
 
 	sqlcUser := sqlc.User{
-		UserID:    validUUID.String(),
+		UserID:    validUUID,
 		FirstName: "João",
 		LastName:  "O'Brien-Smith",
 		Email:     "test+tag@example.com",
@@ -197,7 +161,7 @@ func TestFromSQLC_CaseSensitiveStatus(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			validUUID := uuid.New()
 			sqlcUser := sqlc.User{
-				UserID:    validUUID.String(),
+				UserID:    validUUID,
 				FirstName: "Test",
 				LastName:  "User",
 				Email:     "test@example.com",

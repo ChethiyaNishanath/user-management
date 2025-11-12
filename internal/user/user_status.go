@@ -36,7 +36,7 @@ func (s UserStatus) MarshalJSON() ([]byte, error) {
 	case 0:
 		return json.Marshal("Active")
 	case 1:
-		return json.Marshal("Inactive")
+		return json.Marshal("InActive")
 	default:
 		return nil, fmt.Errorf("unknown status value")
 	}
@@ -51,7 +51,7 @@ func (s *UserStatus) UnmarshalJSON(data []byte) error {
 	switch str {
 	case "Active":
 		*s = 0
-	case "Inactive":
+	case "InActive":
 		*s = 1
 	default:
 		return fmt.Errorf("invalid status string: %s", str)

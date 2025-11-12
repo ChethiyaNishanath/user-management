@@ -5,8 +5,21 @@
 package sqlc
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
+
+type Instrument struct {
+	ID             uuid.UUID
+	Symbol         string
+	Name           string
+	InstrumentType string
+	Exchange       string
+	LastPrice      string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
 
 type User struct {
 	UserID    uuid.UUID

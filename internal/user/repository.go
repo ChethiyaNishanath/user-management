@@ -2,7 +2,7 @@ package user
 
 import (
 	"context"
-	"database/sql"
+	"user-management/internal/common/converters"
 	"user-management/internal/db/sqlc"
 )
 
@@ -46,12 +46,12 @@ func (r *Repository) GetUserById(ctx context.Context, userId string) (sqlc.User,
 func (r *Repository) Update(ctx context.Context, user *User) (sqlc.User, error) {
 
 	parms := sqlc.UpdateUserParams{
-		FirstName: nullableString(user.FirstName),
-		LastName:  nullableString(user.LastName),
-		Email:     nullableString(user.Email),
-		Phone:     nullableString(user.Phone),
-		Age:       nullableInt16(user.Age),
-		Status:    nullableString(user.Status.String()),
+		FirstName: converters.NullableString(user.FirstName),
+		LastName:  converters.NullableString(user.LastName),
+		Email:     converters.NullableString(user.Email),
+		Phone:     converters.NullableString(user.Phone),
+		Age:       converters.NullableInt16(user.Age),
+		Status:    converters.NullableString(user.Status.String()),
 		UserID:    user.UserId.String(),
 	}
 
@@ -60,18 +60,4 @@ func (r *Repository) Update(ctx context.Context, user *User) (sqlc.User, error) 
 
 func (r *Repository) Delete(ctx context.Context, userId string) error {
 	return r.queries.DeleteUserByID(ctx, userId)
-}
-
-func nullableString(s string) sql.NullString {
-	return sql.NullString{
-		String: s,
-		Valid:  s != "",
-	}
-}
-
-func nullableInt16(i int16) sql.NullInt16 {
-	return sql.NullInt16{
-		Int16: i,
-		Valid: i > 0,
-	}
 }

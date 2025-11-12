@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"log/slog"
 	"user-management/internal/db/sqlc"
 
@@ -50,7 +51,7 @@ func UpdatableUser(userId uuid.UUID, u *sqlc.User) (*User, error) {
 func FromSQLC(u sqlc.User) User {
 	parsedStatus, err := ParseUserStatus(u.Status)
 	if err != nil {
-		slog.Error("Invalid status from DB, defaulting to INACTIVE", "error", u.Status)
+		slog.Error(fmt.Sprintf("Invalid status from DB, defaulting to INACTIVE userId %s", u.UserID), "error", u.Status)
 		parsedStatus = InActive
 	}
 

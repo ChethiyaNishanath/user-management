@@ -1,83 +1,35 @@
 package it
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"path/filepath"
 	"strings"
 	"testing"
-	"user-management/internal/app"
-	"user-management/internal/config"
-	"user-management/internal/db"
 	"user-management/internal/user"
+	helper "user-management/test/helper"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/modules/postgres"
 )
 
-var r *chi.Mux
+func TestCreateUserAPI(t *testing.T) {
 
-func TestMain(m *testing.M) {
-	config := config.Load()
-
-	ctx := context.Background()
-
-	dbName := "usermanagementdb"
-	dbUser := "postgres"
-	dbPassword := "Test12344"
-
-	postgresContainer, err := postgres.Run(ctx,
-		"postgres:16-alpine",
-		postgres.WithInitScripts(filepath.Join("testdata", "init-user-db.sh")),
-		postgres.WithConfigFile(filepath.Join("testdata", "my-postgres.conf")),
-		postgres.WithDatabase(dbName),
-		postgres.WithUsername(dbUser),
-		postgres.WithPassword(dbPassword),
-		postgres.BasicWaitStrategies(),
-	)
-
-	defer func() {
-		if err := testcontainers.TerminateContainer(postgresContainer); err != nil {
-			slog.Error(fmt.Sprintf("failed to terminate container: %s", err))
-		}
-	}()
-	if err != nil {
-		slog.Error(fmt.Sprintf("failed to start container: %s", err))
-		return
+	reqBody := map[string]interface{}{
+		"firstName": "Chethiya",
+		"lastName":  "Viharagama",
+		"email":     "chethiya.viharagama@yaalalabs.com",
+		"phone":     "+94768680618",
+		"age":       30,
+		"status":    "InActive",
 	}
 
-	dbConn := db.Connect(config.DBDsn)
-	defer dbConn.Close()
-
-	newApp := app.NewApp(dbConn)
-
-	r := chi.NewRouter()
-	newApp.RegisterRoutes(r)
-}
-
-func TestCreateUserAPI(t *testing.T) {
-	reqBody := `{
-		"firstName": "Chethiya",
-        "lastName": "Viharagama",
-        "email": "chethiya.viharagama@yaalalabs.com",
-        "phone": "+94768680618",
-        "age": 11,
-        "status": "Active"
-	}`
-
-	req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(reqBody))
-	req.Header.Set("Content-Type", "application/json")
+	req := helper.NewJSONRequest(t, http.MethodPost, "/users", reqBody)
 	w := httptest.NewRecorder()
 
-	r.ServeHTTP(w, req)
+	TestRouter.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusCreated, w.Code, "Expected status 201 Created")
 
@@ -90,7 +42,7 @@ func TestCreateUserAPI(t *testing.T) {
 	assert.Equal(t, "Viharagama", createdUser.LastName)
 	assert.Equal(t, "chethiya.viharagama@yaalalabs.com", createdUser.Email)
 	assert.Equal(t, "+94768680618", createdUser.Phone)
-	assert.Equal(t, int16(11), createdUser.Age)
+	assert.Equal(t, int16(30), createdUser.Age)
 	assert.Equal(t, user.Active, createdUser.Status)
 }
 
@@ -100,19 +52,18 @@ func TestGetAllUsersAPI(t *testing.T) {
         "lastName": "User",
         "email": "test.user@example.com",
         "phone": "+94768680619",
-        "age": 25,
-        "status": "Active"
+        "age": 25
 	}`
 
 	createReq := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(reqBody))
 	createReq.Header.Set("Content-Type", "application/json")
 	createW := httptest.NewRecorder()
-	r.ServeHTTP(createW, createReq)
+	TestRouter.ServeHTTP(createW, createReq)
 	require.Equal(t, http.StatusCreated, createW.Code)
 
 	req := httptest.NewRequest(http.MethodGet, "/users", nil)
 	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
+	TestRouter.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code, "Expected status 200 OK")
 
@@ -129,14 +80,13 @@ func TestGetUserByIdAPI(t *testing.T) {
         "lastName": "Doe",
         "email": "john.doe@example.com",
         "phone": "+94768680620",
-        "age": 30,
-        "status": "Active"
+        "age": 30
 	}`
 
 	createReq := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(reqBody))
 	createReq.Header.Set("Content-Type", "application/json")
 	createW := httptest.NewRecorder()
-	r.ServeHTTP(createW, createReq)
+	TestRouter.ServeHTTP(createW, createReq)
 	require.Equal(t, http.StatusCreated, createW.Code)
 
 	var createdUser user.User
@@ -145,7 +95,7 @@ func TestGetUserByIdAPI(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/users/%s", createdUser.UserId.String()), nil)
 	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
+	TestRouter.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code, "Expected status 200 OK")
 
@@ -167,7 +117,7 @@ func TestGetUserByIdAPI_NotFound(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/users/%s", nonExistentID.String()), nil)
 	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
+	TestRouter.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code, "Expected status 404 Not Found")
 }
@@ -175,26 +125,26 @@ func TestGetUserByIdAPI_NotFound(t *testing.T) {
 func TestGetUserByIdAPI_InvalidUUID(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/users/invalid-uuid", nil)
 	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
+	TestRouter.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code, "Expected status 400 Bad Request")
 }
 
 func TestUpdateUserAPI(t *testing.T) {
-	reqBody := `{
-		"firstName": "Jhon",
-        "lastName": "Doe",
-        "email": "jane.doe@example.com",
-        "phone": "+94768680622",
-        "age": 29,
-        "status": "InActive"
-	}`
 
-	req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(reqBody))
-	req.Header.Set("Content-Type", "application/json")
+	reqBody := map[string]interface{}{
+		"firstName": "Jhon",
+		"lastName":  "Doe",
+		"email":     "jane.doe@example.com",
+		"phone":     "+94768680622",
+		"age":       29,
+		"status":    "InActive",
+	}
+
+	req := helper.NewJSONRequest(t, http.MethodPost, "/users", reqBody)
 	w := httptest.NewRecorder()
 
-	r.ServeHTTP(w, req)
+	TestRouter.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusCreated, w.Code, "Expected status 201 Created")
 
@@ -202,19 +152,18 @@ func TestUpdateUserAPI(t *testing.T) {
 	err := json.NewDecoder(w.Body).Decode(&createdUser)
 	require.NoError(t, err, "Failed to decode response")
 
-	updateReqBody := `{
+	updateReqBody := map[string]interface{}{
 		"firstName": "Jane",
-        "lastName": "Doe",
-        "email": "jane.doe@example.com",
-        "phone": "+94768680622",
-        "age": 29,
-        "status": "InActive"
-	}`
+		"lastName":  "Doe",
+		"email":     "jane.doe@example.com",
+		"phone":     "+94768680622",
+		"age":       29,
+		"status":    "InActive",
+	}
 
-	updateReq := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/users/%s", createdUser.UserId.String()), strings.NewReader(updateReqBody))
-	updateReq.Header.Set("Content-Type", "application/json")
+	updateReq := helper.NewJSONRequest(t, http.MethodPatch, fmt.Sprintf("/users/%s", createdUser.UserId.String()), updateReqBody)
 	updateW := httptest.NewRecorder()
-	r.ServeHTTP(updateW, updateReq)
+	TestRouter.ServeHTTP(updateW, updateReq)
 
 	assert.Equal(t, http.StatusOK, updateW.Code, "Expected status 200 OK")
 
@@ -233,20 +182,19 @@ func TestUpdateUserAPI(t *testing.T) {
 }
 
 func TestDeleteUserAPI(t *testing.T) {
-	reqBody := `{
-		"firstName": "Jhon",
-        "lastName": "Doe",
-        "email": "jane.doe@example.com",
-        "phone": "+94768680622",
-        "age": 29,
-        "status": "InActive"
-	}`
+	reqBody := map[string]interface{}{
+		"firstName": "Jhon2",
+		"lastName":  "Doe2",
+		"email":     "jane.doe2@example.com",
+		"phone":     "+94768680622",
+		"age":       29,
+		"status":    "InActive",
+	}
 
-	req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(reqBody))
-	req.Header.Set("Content-Type", "application/json")
+	req := helper.NewJSONRequest(t, http.MethodPost, "/users", reqBody)
 	w := httptest.NewRecorder()
 
-	r.ServeHTTP(w, req)
+	TestRouter.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusCreated, w.Code, "Expected status 201 Created")
 
@@ -256,24 +204,23 @@ func TestDeleteUserAPI(t *testing.T) {
 
 	updateReq := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/users/%s", createdUser.UserId.String()), nil)
 	updateW := httptest.NewRecorder()
-	r.ServeHTTP(updateW, updateReq)
+	TestRouter.ServeHTTP(updateW, updateReq)
 }
 
 func TestDeleteUserWithMultipleUsersAPI(t *testing.T) {
-	reqBodyOne := `{
-		"firstName": "Jhon",
-        "lastName": "Doe",
-        "email": "jane.doe@example.com",
-        "phone": "+94768680622",
-        "age": 29,
-        "status": "InActive"
-	}`
+	reqBodyOne := map[string]interface{}{
+		"firstName": "Jhon11",
+		"lastName":  "Doe11",
+		"email":     "jane.doe11@example.com",
+		"phone":     "+94768680622",
+		"age":       29,
+		"status":    "InActive",
+	}
 
-	req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(reqBodyOne))
-	req.Header.Set("Content-Type", "application/json")
+	req := helper.NewJSONRequest(t, http.MethodPost, "/users", reqBodyOne)
 	w := httptest.NewRecorder()
 
-	r.ServeHTTP(w, req)
+	TestRouter.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusCreated, w.Code, "Expected status 201 Created")
 
@@ -283,20 +230,19 @@ func TestDeleteUserWithMultipleUsersAPI(t *testing.T) {
 
 	//========================================================================
 
-	reqBodyTwo := `{
-		"firstName": "Chethiya",
-        "lastName": "Nishanath",
-        "email": "chethiya.nishanath@example.com",
-        "phone": "+94768680600",
-        "age": 29,
-        "status": "InActive"
-	}`
+	reqBodyTwo := map[string]interface{}{
+		"firstName": "Chethiya1",
+		"lastName":  "Viharagama1",
+		"email":     "chethiya.viharagama1@yaalalabs.com",
+		"phone":     "+94768680618",
+		"age":       29,
+		"status":    "InActive",
+	}
 
-	reqTwo := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(reqBodyTwo))
-	reqTwo.Header.Set("Content-Type", "application/json")
+	reqTwo := helper.NewJSONRequest(t, http.MethodPost, "/users", reqBodyTwo)
 	wTwo := httptest.NewRecorder()
 
-	r.ServeHTTP(wTwo, reqTwo)
+	TestRouter.ServeHTTP(wTwo, reqTwo)
 
 	assert.Equal(t, http.StatusCreated, w.Code, "Expected status 201 Created")
 
@@ -304,21 +250,21 @@ func TestDeleteUserWithMultipleUsersAPI(t *testing.T) {
 	errTwo := json.NewDecoder(wTwo.Body).Decode(&createdUserTwo)
 	require.NoError(t, errTwo, "Failed to decode response")
 
-	updateReq := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/users/%s", createdUserOne.UserId.String()), nil)
-	updateReq.Header.Set("Content-Type", "application/json")
-	updateW := httptest.NewRecorder()
-	r.ServeHTTP(updateW, updateReq)
+	deleteReq := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/users/%s", createdUserOne.UserId.String()), nil)
+	deleteReq.Header.Set("Content-Type", "application/json")
+	deleteW := httptest.NewRecorder()
+	TestRouter.ServeHTTP(deleteW, deleteReq)
 
 	//=========================================================
 
 	reqAll := httptest.NewRequest(http.MethodGet, "/users", nil)
 	wAll := httptest.NewRecorder()
-	r.ServeHTTP(wAll, reqAll)
+	TestRouter.ServeHTTP(wAll, reqAll)
 
 	assert.Equal(t, http.StatusOK, wAll.Code, "Expected status 200 OK")
 
 	var users []user.User
-	errAll := json.NewDecoder(w.Body).Decode(&users)
+	errAll := json.NewDecoder(wAll.Body).Decode(&users)
 
 	require.NoError(t, errAll, "Failed to decode response")
 

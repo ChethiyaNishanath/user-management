@@ -41,4 +41,4 @@ services:
       DB_DSN: postgres://postgres:Test12344@postgres:5432/usermanagementdb?sslmode=disable
     ports:
       - "8080:8080"
-    restart: always
+    restart: no

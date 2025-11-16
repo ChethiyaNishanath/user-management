@@ -11,26 +11,26 @@ import (
 )
 
 type Instrument struct {
-	Id              uuid.UUID `json:"id"`
-	Symbol          string    `json:"symbol" validate:"required,min=2,max=50"`
-	Name            string    `json:"name" validate:"required,min=2,max=50"`
-	Instrument_Type string    `json:"type" validate:"required,email"`
-	Exchange        string    `json:"exchange" validate:"omitempty,e164"`
-	Last_Price      float64   `json:"last_price" validate:"omitempty,gt=0"`
-	Created_At      time.Time `json:"created_At" validate:"omitempty,userStatus"`
-	Updated_At      time.Time `json:"updated_At" validate:"omitempty,userStatus"`
+	Id             uuid.UUID `json:"id"`
+	Symbol         string    `json:"symbol" validate:"required,min=1,max=20"`
+	Name           string    `json:"name" validate:"required,min=2,max=100"`
+	InstrumentType string    `json:"instrument_type" validate:"required,oneof=Equity Bond ETF Crypto Forex"`
+	Exchange       string    `json:"exchange" validate:"required,alphanum,min=2,max=10"`
+	LastPrice      float64   `json:"last_price" validate:"required,gt=0"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 func NewInstrument(symbol string, name string, instrumentType string, exchange string, lastPrice float64) *Instrument {
 	return &Instrument{
-		Id:              uuid.New(),
-		Symbol:          symbol,
-		Name:            name,
-		Instrument_Type: instrumentType,
-		Exchange:        exchange,
-		Last_Price:      lastPrice,
-		Created_At:      time.Now(),
-		Updated_At:      time.Now(),
+		Id:             uuid.New(),
+		Symbol:         symbol,
+		Name:           name,
+		InstrumentType: instrumentType,
+		Exchange:       exchange,
+		LastPrice:      lastPrice,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
 	}
 }
 
@@ -43,14 +43,14 @@ func UpdatableInstrument(id uuid.UUID, instrument *sqlc.Instrument) (*Instrument
 	}
 
 	return &Instrument{
-		Id:              id,
-		Symbol:          instrument.Symbol,
-		Name:            instrument.Name,
-		Instrument_Type: instrument.InstrumentType,
-		Exchange:        instrument.Exchange,
-		Last_Price:      lastPrice,
-		Created_At:      instrument.CreatedAt,
-		Updated_At:      time.Now(),
+		Id:             id,
+		Symbol:         instrument.Symbol,
+		Name:           instrument.Name,
+		InstrumentType: instrument.InstrumentType,
+		Exchange:       instrument.Exchange,
+		LastPrice:      lastPrice,
+		CreatedAt:      instrument.CreatedAt,
+		UpdatedAt:      time.Now(),
 	}, nil
 }
 
@@ -63,14 +63,14 @@ func FromSQLC(i sqlc.Instrument) Instrument {
 	}
 
 	return Instrument{
-		Id:              i.ID,
-		Symbol:          i.Symbol,
-		Name:            i.Name,
-		Instrument_Type: i.InstrumentType,
-		Exchange:        i.Exchange,
-		Last_Price:      float64(lastPrice),
-		Created_At:      i.CreatedAt,
-		Updated_At:      i.UpdatedAt,
+		Id:             i.ID,
+		Symbol:         i.Symbol,
+		Name:           i.Name,
+		InstrumentType: i.InstrumentType,
+		Exchange:       i.Exchange,
+		LastPrice:      float64(lastPrice),
+		CreatedAt:      i.CreatedAt,
+		UpdatedAt:      i.UpdatedAt,
 	}
 }
 

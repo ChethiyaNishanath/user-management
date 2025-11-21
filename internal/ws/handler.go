@@ -6,8 +6,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	wsutils "user-management/internal/common/wsutils"
-
 	"github.com/coder/websocket"
 	"github.com/google/uuid"
 )
@@ -55,7 +53,7 @@ func (h *Handler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		var msg wsutils.WSRequest
+		var msg WSRequest
 		if err := json.Unmarshal(data, &msg); err != nil {
 			slog.Error("Invalid Paylaod:", "error", err)
 			continue

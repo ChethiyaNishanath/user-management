@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"log/slog"
 
-	wsutils "user-management/internal/common/wsutils"
-
 	"github.com/coder/websocket"
 )
 
@@ -18,8 +16,8 @@ func (h *Handler) HandleSubscribe(ctx context.Context, conn *websocket.Conn, pay
 
 	if err := json.Unmarshal(payload, &data); err != nil || data.Topic == "" {
 
-		msg := wsutils.WSMessage{
-			Action:  "subscribe",
+		msg := WSMessage{
+			Method:  "subscribe",
 			Success: false,
 			Error:   "Invalid payload or missing topic",
 		}
@@ -36,8 +34,8 @@ func (h *Handler) HandleSubscribe(ctx context.Context, conn *websocket.Conn, pay
 
 	h.connMgr.Subscribe(client, data.Topic)
 
-	msg := wsutils.WSMessage{
-		Action:  "subscribe",
+	msg := WSMessage{
+		Method:  "subscribe",
 		Success: true,
 		Topic:   data.Topic,
 	}
@@ -51,8 +49,8 @@ func (h *Handler) HandleUnsubscribe(ctx context.Context, conn *websocket.Conn, p
 	}
 
 	if err := json.Unmarshal(payload, &data); err != nil || data.Topic == "" {
-		msg := wsutils.WSMessage{
-			Action:  "unsubscribe",
+		msg := WSMessage{
+			Method:  "unsubscribe",
 			Success: false,
 			Error:   "invalid payload or missing topic",
 		}
@@ -68,8 +66,8 @@ func (h *Handler) HandleUnsubscribe(ctx context.Context, conn *websocket.Conn, p
 
 	h.connMgr.Unsubscribe(client, data.Topic)
 
-	msg := wsutils.WSMessage{
-		Action:  "unsubscribe",
+	msg := WSMessage{
+		Method:  "unsubscribe",
 		Success: true,
 		Topic:   data.Topic,
 	}

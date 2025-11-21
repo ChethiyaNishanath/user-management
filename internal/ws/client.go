@@ -3,6 +3,7 @@ package ws
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"sync"
 	"time"
@@ -19,19 +20,15 @@ type WSClient struct {
 
 	OnMessage func(msgType websocket.MessageType, data []byte)
 
-	Reconnect    bool
-	RetryDelay   time.Duration
 	PingInterval time.Duration
 }
 
-func NewWSClient(url string) *WSClient {
-	ctx, cancel := context.WithCancel(context.Background())
+func NewWSClient(cont context.Context, url string) *WSClient {
+	ctx, cancel := context.WithCancel(cont)
 	return &WSClient{
 		URL:          url,
 		ctx:          ctx,
 		cancel:       cancel,
-		Reconnect:    true,
-		RetryDelay:   2 * time.Second,
 		PingInterval: 20 * time.Second,
 	}
 }
@@ -40,11 +37,17 @@ func (c *WSClient) Connect() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	if c.Conn != nil {
+		c.Conn.Close(websocket.StatusNormalClosure, "")
+	}
+
 	var err error
 	c.Conn, _, err = websocket.Dial(c.ctx, c.URL, nil)
 	if err != nil {
 		return err
 	}
+
+	c.Conn.SetReadLimit(5 * 1024 * 1024)
 
 	go c.readLoop()
 	go c.pingLoop()
@@ -57,35 +60,12 @@ func (c *WSClient) readLoop() {
 		msgType, data, err := c.Conn.Read(c.ctx)
 		if err != nil {
 			slog.Error("WS read error", "error", err)
-			c.reconnect()
+			c.cancel()
 			return
 		}
 
 		if c.OnMessage != nil {
 			c.OnMessage(msgType, data)
-		}
-	}
-}
-
-func (c *WSClient) reconnect() {
-	if !c.Reconnect {
-		return
-	}
-
-	for {
-		select {
-		case <-c.ctx.Done():
-			return
-		default:
-		}
-
-		time.Sleep(c.RetryDelay)
-		slog.Info("Attempting reconnect...")
-
-		err := c.Connect()
-		if err == nil {
-			slog.Info("Reconnected")
-			return
 		}
 	}
 }
@@ -99,7 +79,7 @@ func (c *WSClient) pingLoop() {
 		case <-ticker.C:
 			c.mu.Lock()
 			if c.Conn != nil {
-				_ = c.Conn.Ping(c.ctx)
+				c.Conn.Ping(c.ctx)
 			}
 			c.mu.Unlock()
 
@@ -121,9 +101,17 @@ func (c *WSClient) SendJSON(v any) error {
 	return c.Conn.Write(c.ctx, websocket.MessageText, data)
 }
 
-func (c *WSClient) SendRaw(msgType websocket.MessageType, data []byte) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+func (c *WSClient) Close() {
+	c.cancel()
 
-	return c.Conn.Write(c.ctx, msgType, data)
+	c.mu.Lock()
+	if c.Conn != nil {
+		c.Conn.Close(websocket.StatusNormalClosure, "shutdown")
+	}
+	c.mu.Unlock()
+}
+
+func (c *WSClient) BlockUntilClosed() error {
+	<-c.ctx.Done()
+	return errors.New("connection closed")
 }

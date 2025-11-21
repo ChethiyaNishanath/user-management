@@ -67,7 +67,9 @@ func TestWSClient(t *testing.T) {
 
 	wsURL := "ws" + server.URL[len("http"):]
 
-	wsClient := ws.NewWSClient(wsURL)
+	ctx := context.Background()
+
+	wsClient := ws.NewWSClient(ctx, wsURL)
 
 	received := make(chan []byte, 10)
 

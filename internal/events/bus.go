@@ -1,6 +1,8 @@
 package events
 
-import "sync"
+import (
+	"sync"
+)
 
 type Event struct {
 	Action string
@@ -21,7 +23,7 @@ func NewBus() *Bus {
 	}
 }
 
-func (b *Bus) Publish(action string, topic string, data any) {
+func (b *Bus) Publish(topic string, data any) {
 	b.mu.RLock()
 	subs, ok := b.subscribers[topic]
 	b.mu.RUnlock()
@@ -30,7 +32,7 @@ func (b *Bus) Publish(action string, topic string, data any) {
 		return
 	}
 
-	event := Event{Action: action, Data: data}
+	event := Event{Topic: topic, Data: data}
 	for _, sub := range subs {
 		go sub(event)
 	}

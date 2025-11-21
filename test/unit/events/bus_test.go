@@ -30,17 +30,50 @@ func TestSubscribeAndPublish(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	bus.Subscribe(ws.PriceUpdate, func(e events.Event) {
+	bus.Subscribe(events.InstrumentUpdated, func(e events.Event) {
+
+		data := e.Data.(events.InstrumentUpdatedEvent)
+
 		defer wg.Done()
-		if e.Topic != ws.PriceUpdate {
-			t.Errorf("expected topic %s, got %s", ws.PriceUpdate, e.Topic)
+		if e.Topic != events.InstrumentUpdated {
+			t.Errorf("expected topic %s, got %s", events.InstrumentUpdated, e.Topic)
+		}
+		if data.Price != "42" {
+			t.Errorf("expected data 42, got %v", e.Data)
+		}
+	})
+
+	evt := events.InstrumentUpdatedEvent{
+		Symbol:    "AAPL",
+		Price:     "42",
+		UpdatedAt: time.Now(),
+	}
+
+	bus.Publish(events.InstrumentUpdated, evt)
+
+	waitWithTimeout(t, &wg)
+}
+
+func TestSubscribeAndPublish2(t *testing.T) {
+	bus := events.NewBus()
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	topic := ws.PriceUpdate
+
+	bus.Subscribe(topic, func(e events.Event) {
+		defer wg.Done()
+
+		if e.Topic != topic {
+			t.Errorf("expected topic %s, got %s", topic, e.Topic)
 		}
 		if e.Data != 42 {
 			t.Errorf("expected data 42, got %v", e.Data)
 		}
 	})
 
-	bus.Publish(ws.PriceUpdate, "AAPL", 42)
+	bus.Publish(topic, 42)
 
 	waitWithTimeout(t, &wg)
 }
@@ -62,7 +95,7 @@ func TestMultipleSubscribers(t *testing.T) {
 	bus.Subscribe("chat", call)
 	bus.Subscribe("chat", call)
 
-	bus.Publish("chat", "hello", nil)
+	bus.Publish("chat", "hello")
 
 	waitWithTimeout(t, &wg)
 }
@@ -70,7 +103,7 @@ func TestMultipleSubscribers(t *testing.T) {
 func TestPublishToUnknownTopicDoesNotPanic(t *testing.T) {
 	bus := events.NewBus()
 
-	bus.Publish("does_not_exist", "ignored", nil)
+	bus.Publish("ignored", nil)
 }
 
 func TestConcurrentPublishAndSubscribe(t *testing.T) {
@@ -89,7 +122,7 @@ func TestConcurrentPublishAndSubscribe(t *testing.T) {
 		wg.Add(1)
 		go func(n int) {
 			defer wg.Done()
-			bus.Publish("topic", "AAPL", n)
+			bus.Publish("AAPL", n)
 		}(i)
 	}
 

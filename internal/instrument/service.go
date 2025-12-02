@@ -4,23 +4,20 @@ import (
 	"context"
 	"fmt"
 	"user-management/internal/common/converters"
-	events "user-management/internal/events"
-	ws "user-management/internal/ws"
 
 	"github.com/google/uuid"
 )
 
 type Service struct {
-	repo     *Repository
-	eventBus *events.Bus
+	repo *Repository
 }
 
-func NewService(repo *Repository, bus *events.Bus) *Service {
-	return &Service{repo: repo, eventBus: bus}
+func NewService(repo *Repository) *Service {
+	return &Service{repo: repo}
 }
 
 func (s *Service) CreateInstrument(ctx context.Context, i *Instrument) (Instrument, error) {
-	newInstrument := NewInstrument(i.Symbol, i.Name, i.InstrumentType, i.Exchange, i.LastPrice)
+	newInstrument := NewInstrument(i.Symbol, i.Name, i.Instrument_Type, i.Exchange, i.Last_Price)
 	savedInstrument, err := s.repo.Create(ctx, newInstrument)
 	if err != nil {
 		return Instrument{}, err
@@ -44,15 +41,7 @@ func (s *Service) GetInstrumentById(ctx context.Context, instrumentId string) (I
 	return FromSQLC(u), nil
 }
 
-func (s *Service) GetInstrumentBySymbol(ctx context.Context, symbol string) (Instrument, error) {
-	instrument, err := s.repo.GetInstrumentBySymbol(ctx, symbol)
-	if err != nil {
-		return Instrument{}, err
-	}
-	return FromSQLC(instrument), nil
-}
-
-func (s *Service) UpdateInstrument(ctx context.Context, instrumentId string, i *InstrumentUpdateRequest, connMgr *ws.ConnectionManager) (Instrument, error) {
+func (s *Service) UpdateInstrument(ctx context.Context, instrumentId string, i *InstrumentUpdateRequest) (Instrument, error) {
 
 	existing, err := s.repo.GetInstrumentById(ctx, instrumentId)
 	if err != nil {
@@ -65,20 +54,14 @@ func (s *Service) UpdateInstrument(ctx context.Context, instrumentId string, i *
 	if i.Name != "" {
 		existing.Name = i.Name
 	}
-	if i.InstrumentType != "" {
-		existing.InstrumentType = i.InstrumentType
+	if i.Instrument_Type != "" {
+		existing.InstrumentType = i.Instrument_Type
 	}
 	if i.Exchange != "" {
 		existing.Exchange = i.Exchange
 	}
-
-	priceChanged := false
-	if i.LastPrice > 0 {
-		newPriceStr := converters.Float64ToString(i.LastPrice)
-		if existing.LastPrice != newPriceStr {
-			priceChanged = true
-			existing.LastPrice = newPriceStr
-		}
+	if i.Last_Price > 0 {
+		existing.LastPrice = converters.Float64ToString(i.Last_Price)
 	}
 
 	id, err := uuid.Parse(instrumentId)
@@ -96,18 +79,6 @@ func (s *Service) UpdateInstrument(ctx context.Context, instrumentId string, i *
 	if err != nil {
 		return Instrument{}, err
 	}
-
-	if priceChanged {
-
-		evt := events.InstrumentUpdatedEvent{
-			Symbol:    savedInstrument.Symbol,
-			Price:     savedInstrument.LastPrice,
-			UpdatedAt: savedInstrument.UpdatedAt,
-		}
-
-		s.eventBus.Publish(ws.PriceUpdate, events.InstrumentUpdated, evt)
-	}
-
 	return FromSQLC(savedInstrument), nil
 }
 

@@ -22,10 +22,10 @@ func (r *Repository) Create(ctx context.Context, instrument *Instrument) (sqlc.I
 	params := sqlc.CreateInstrumentParams{
 		Symbol:         instrument.Symbol,
 		Name:           instrument.Name,
-		InstrumentType: instrument.InstrumentType,
+		InstrumentType: instrument.Instrument_Type,
 		Exchange:       instrument.Exchange,
-		LastPrice:      converters.Float64ToString(instrument.LastPrice),
-		UpdatedAt:      instrument.UpdatedAt,
+		LastPrice:      converters.Float64ToString(instrument.Last_Price),
+		UpdatedAt:      instrument.Updated_At,
 		ID:             instrument.Id,
 	}
 
@@ -53,19 +53,15 @@ func (r *Repository) GetInstrumentById(ctx context.Context, instrumentId string)
 	return r.queries.FindInstrumentById(ctx, parsedUUID)
 }
 
-func (r *Repository) GetInstrumentBySymbol(ctx context.Context, symbol string) (sqlc.Instrument, error) {
-	return r.queries.FindInstrumentBySymbol(ctx, symbol)
-}
-
 func (r *Repository) Update(ctx context.Context, instrument *Instrument) (sqlc.Instrument, error) {
 
 	parms := sqlc.UpdateInstrumentParams{
 		Symbol:         converters.NullableString(instrument.Symbol),
 		Name:           converters.NullableString(instrument.Name),
-		InstrumentType: converters.NullableString(instrument.InstrumentType),
+		InstrumentType: converters.NullableString(instrument.Instrument_Type),
 		Exchange:       converters.NullableString(instrument.Exchange),
-		LastPrice:      converters.NullableFloat64(instrument.LastPrice),
-		UpdatedAt:      converters.NullableTime(instrument.UpdatedAt),
+		LastPrice:      converters.NullableFloat64(instrument.Last_Price),
+		UpdatedAt:      converters.NullableTime(instrument.Updated_At),
 		ID:             instrument.Id,
 	}
 

@@ -12,16 +12,13 @@ SELECT * FROM INSTRUMENTS LIMIT $1 OFFSET $2;
 -- name: DeleteInstrumentById :exec
 DELETE FROM INSTRUMENTS WHERE ID = $1;
 
--- name: FindInstrumentBySymbol :one
-SELECT * FROM INSTRUMENTS WHERE SYMBOL = $1;
-
 -- name: UpdateInstrument :one
 UPDATE INSTRUMENTS
 SET
     SYMBOL = COALESCE(sqlc.narg('symbol'), SYMBOL),
     NAME  = COALESCE(sqlc.narg('name'), NAME),
-    INSTRUMENT_TYPE      = COALESCE(sqlc.narg('instrument_type'), INSTRUMENT_TYPE),
-    EXCHANGE      = COALESCE(sqlc.narg('exchange'), EXCHANGE),
+    INSTRUMENT_TYPE      = COALESCE(sqlc.narg('instrument_type'), EXCHANGE),
+    EXCHANGE      = COALESCE(sqlc.narg('exchange'), PHONE),
     LAST_PRICE        = COALESCE(sqlc.narg('last_price'), LAST_PRICE),
     CREATED_AT     = COALESCE(sqlc.narg('created_at'), CREATED_AT),
     UPDATED_AT     = COALESCE(sqlc.narg('updated_at'), UPDATED_AT)

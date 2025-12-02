@@ -37,9 +37,7 @@ import (
 // @BasePath /
 func main() {
 
-	config.Init()
-
-	config := config.GetConfig()
+	config := config.Load()
 
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

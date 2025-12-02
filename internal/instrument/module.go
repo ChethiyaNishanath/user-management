@@ -1,7 +1,31 @@
+// package instrument
+
+// import (
+// 	"context"
+// 	"user-management/internal/events"
+// 	"user-management/internal/ws"
+// )
+
+// func RegisterModule(
+// 	ctx *context.Context,
+// 	service *Service,
+// 	wsRouter *ws.Router,
+// 	connMgr *ws.ConnectionManager,
+// 	eventBus *events.Bus,
+// ) {
+// 	RegisterWsRoutes(wsRouter, service)
+
+// 	eventBus.Subscribe(events.InstrumentUpdated, func(e events.Event) {
+// 		evt := e.Data.(events.InstrumentUpdatedEvent)
+// 		connMgr.Broadcast(*ctx, evt.Symbol, evt)
+// 	})
+// }
+
 package instrument
 
 import (
 	"context"
+	wsutils "user-management/internal/common/wsutils"
 	"user-management/internal/db/sqlc"
 	events "user-management/internal/events"
 	ws "user-management/internal/ws"
@@ -37,8 +61,8 @@ func (m *Module) registerEventSubscribers(bus *events.Bus) {
 		m.Handler.ConnMgr.Broadcast(
 			context.Background(),
 			evt.Symbol,
-			ws.WSMessage{
-				Method: e.Action,
+			wsutils.WSMessage{
+				Action: e.Action,
 				Topic:  e.Topic,
 				Data:   evt,
 			},

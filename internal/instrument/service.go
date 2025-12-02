@@ -105,7 +105,7 @@ func (s *Service) UpdateInstrument(ctx context.Context, instrumentId string, i *
 			UpdatedAt: savedInstrument.UpdatedAt,
 		}
 
-		s.eventBus.Publish(events.InstrumentUpdated, evt)
+		s.eventBus.Publish(ws.PriceUpdate, events.InstrumentUpdated, evt)
 	}
 
 	return FromSQLC(savedInstrument), nil

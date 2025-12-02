@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	wsutils "user-management/internal/common/wsutils"
 	"user-management/internal/config"
 	"user-management/internal/db"
 	"user-management/internal/db/sqlc"
@@ -58,7 +59,7 @@ func TestWebSocket_SubscribeIntegration(t *testing.T) {
 	require.True(t, ok)
 
 	payload, _ := json.Marshal(map[string]any{"topic": "AAPL"})
-	req := ws.WSRequest{Method: "subscribe", Params: payload}
+	req := wsutils.WSRequest{Action: "subscribe", Payload: payload}
 
 	require.NoError(t, wsjson.Write(ctx, conn, req))
 
@@ -131,7 +132,7 @@ func TestWebSocket_UnsubscribeIntegration(t *testing.T) {
 	require.True(t, ok)
 
 	subPayload, _ := json.Marshal(map[string]any{"topic": "AAPL"})
-	require.NoError(t, wsjson.Write(ctx, conn, ws.WSRequest{Method: "subscribe", Params: subPayload}))
+	require.NoError(t, wsjson.Write(ctx, conn, wsutils.WSRequest{Action: "subscribe", Payload: subPayload}))
 
 	var subResp map[string]any
 	require.NoError(t, wsjson.Read(ctx, conn, &subResp))
@@ -142,7 +143,7 @@ func TestWebSocket_UnsubscribeIntegration(t *testing.T) {
 	assert.True(t, client.Topics["AAPL"])
 
 	unsubPayload, _ := json.Marshal(map[string]any{"topic": "AAPL"})
-	require.NoError(t, wsjson.Write(ctx, conn, ws.WSRequest{Method: "unsubscribe", Params: unsubPayload}))
+	require.NoError(t, wsjson.Write(ctx, conn, wsutils.WSRequest{Action: "unsubscribe", Payload: unsubPayload}))
 
 	var unsubResp map[string]any
 	require.NoError(t, wsjson.Read(ctx, conn, &unsubResp))
@@ -154,7 +155,7 @@ func TestWebSocket_UnsubscribeIntegration(t *testing.T) {
 func TestWebSocket_ReceivePriceUpdate(t *testing.T) {
 	ctx := context.Background()
 
-	config := config.GetConfig()
+	config := config.Load()
 	dbConn := db.Connect(config.DBDsn)
 	defer dbConn.Close()
 
@@ -209,9 +210,9 @@ func TestWebSocket_ReceivePriceUpdate(t *testing.T) {
 	require.NoError(t, wsjson.Read(ctx, conn, &hello))
 
 	subPayload, _ := json.Marshal(map[string]any{"topic": "AAPL"})
-	require.NoError(t, wsjson.Write(ctx, conn, ws.WSRequest{
-		Method: "subscribe",
-		Params: subPayload,
+	require.NoError(t, wsjson.Write(ctx, conn, wsutils.WSRequest{
+		Action:  "subscribe",
+		Payload: subPayload,
 	}))
 
 	var subResp map[string]any

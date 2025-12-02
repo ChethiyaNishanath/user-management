@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	wsutils "user-management/internal/common/wsutils"
+
 	ws "user-management/internal/ws"
 
 	"github.com/coder/websocket"
@@ -146,11 +148,11 @@ func TestHandleWebSocket_SubscribeFlow(t *testing.T) {
 	defer conn.Close(websocket.StatusNormalClosure, "")
 
 	payload, _ := json.Marshal(map[string]any{"topic": "ETHUSD"})
-	req := ws.WSRequest{Method: "subscribe", Params: payload}
+	req := wsutils.WSRequest{Action: "subscribe", Payload: payload}
 
 	require.NoError(t, wsjson.Write(ctx, conn, req))
 
-	var resp ws.WSMessage
+	var resp wsutils.WSMessage
 	require.NoError(t, wsjson.Read(ctx, conn, &resp))
 
 	require.True(t, resp.Success)
@@ -184,8 +186,8 @@ func TestHandleWebSocket_BroadcastFromManager(t *testing.T) {
 
 	connMgr.Subscribe(client, "BTCUSD")
 
-	msg := ws.WSMessage{
-		Method: ws.PriceUpdate,
+	msg := wsutils.WSMessage{
+		Action: ws.PriceUpdate,
 		Topic:  "BTCUSD",
 		Data:   map[string]any{"price": 123.45},
 	}
@@ -195,11 +197,11 @@ func TestHandleWebSocket_BroadcastFromManager(t *testing.T) {
 	_, data, err := wsConn.Read(ctx)
 	require.NoError(t, err)
 
-	var resp ws.WSMessage
+	var resp wsutils.WSMessage
 	json.Unmarshal(data, &resp)
 
-	if resp.Method != ws.PriceUpdate {
-		t.Fatalf("expected action %s, got %s", ws.PriceUpdate, resp.Method)
+	if resp.Action != ws.PriceUpdate {
+		t.Fatalf("expected action %s, got %s", ws.PriceUpdate, resp.Action)
 	}
 	if resp.Topic != "BTCUSD" {
 		t.Fatalf("expected topic 'BTCUSD', got %s", resp.Topic)

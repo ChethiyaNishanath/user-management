@@ -6,9 +6,7 @@ import (
 	"user-management/internal/db/sqlc"
 	events "user-management/internal/events"
 	"user-management/internal/instrument"
-	"user-management/internal/integration/binance"
 	"user-management/internal/middleware"
-	market "user-management/internal/spot_trading/market"
 	"user-management/internal/user"
 	"user-management/internal/validation"
 	ws "user-management/internal/ws"
@@ -26,7 +24,6 @@ type App struct {
 	UserHandler       *user.Handler
 	InstrumentHandler *instrument.Handler
 	WebSocketHandler  *ws.Handler
-	MarketHandler     *market.Handler
 }
 
 func NewApp(db *sql.DB, ctx *context.Context) *App {
@@ -41,13 +38,6 @@ func NewApp(db *sql.DB, ctx *context.Context) *App {
 	instrumentModule := instrument.NewModule(queries, validate, connMgr, bus)
 	userModule := user.NewModule(queries, validate)
 
-	streamer := binance.NewStreamer(*ctx, bus)
-	binance.NewModule(ctx, bus, connMgr)
-
-	go streamer.Start(*ctx)
-
-	marketModule := market.NewModule(streamer)
-
 	return &App{
 		DB:                db,
 		Validator:         validate,
@@ -55,7 +45,6 @@ func NewApp(db *sql.DB, ctx *context.Context) *App {
 		UserHandler:       userModule.Handler,
 		InstrumentHandler: instrumentModule.Handler,
 		WebSocketHandler:  websocketModule.Handler,
-		MarketHandler:     marketModule.Handler,
 	}
 }
 
@@ -77,10 +66,6 @@ func (a *App) RegisterRoutes(r chi.Router) {
 		r.Get("/{id}", a.InstrumentHandler.GetInstrumentById)
 		r.Patch("/{id}", a.InstrumentHandler.UpdateInstrumentById)
 		r.Delete("/{id}", a.InstrumentHandler.DeleteInstrumentById)
-	})
-
-	r.Route("/market", func(r chi.Router) {
-		r.Get("/depth", a.MarketHandler.FetchOrderBook)
 	})
 
 	r.Get("/ws", a.WebSocketHandler.HandleWebSocket)

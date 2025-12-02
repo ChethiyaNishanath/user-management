@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	wsutils "user-management/internal/common/wsutils"
 	ws "user-management/internal/ws"
 
 	"github.com/coder/websocket"
@@ -23,8 +24,8 @@ func getInstrument(instrumentService *Service) ws.HandlerFunc {
 		if err := json.Unmarshal(payload, &p); err != nil {
 			slog.Warn("Invalid get_instrument payload", "warning", err)
 
-			msg := ws.WSMessage{
-				Method:  "get_instrument_response",
+			msg := wsutils.WSMessage{
+				Action:  "get_instrument_response",
 				Success: false,
 				Error:   "Invalid payload",
 			}
@@ -36,8 +37,8 @@ func getInstrument(instrumentService *Service) ws.HandlerFunc {
 		u, err := instrumentService.GetInstrumentBySymbol(ctx, p.Symbol)
 		if err != nil {
 
-			msg := ws.WSMessage{
-				Method:  "get_instrument_response",
+			msg := wsutils.WSMessage{
+				Action:  "get_instrument_response",
 				Success: false,
 				Error:   "Instrument not found",
 			}
@@ -46,8 +47,8 @@ func getInstrument(instrumentService *Service) ws.HandlerFunc {
 			return
 		}
 
-		msg := ws.WSMessage{
-			Method: "get_instrument_response",
+		msg := wsutils.WSMessage{
+			Action: "get_instrument_response",
 			Data:   u,
 		}
 

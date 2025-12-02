@@ -13,14 +13,13 @@ func TestIntegrationEventFlow(t *testing.T) {
 	bus := events.NewBus()
 	received := make(chan events.Event, 1)
 
-	bus.Subscribe("Test", func(e events.Event) {
+	bus.Subscribe("orders.created", func(e events.Event) {
 		received <- e
 	})
 
 	go func() {
 		time.Sleep(50 * time.Millisecond)
-
-		bus.Publish("Test", map[string]any{
+		bus.Publish("orders.created", "Test", map[string]any{
 			"id":       "abc123",
 			"quantity": 5,
 		})
@@ -28,7 +27,7 @@ func TestIntegrationEventFlow(t *testing.T) {
 
 	select {
 	case evt := <-received:
-		assert.Equal(t, "orders.created", evt.Action, "event topic mismatch")
+		assert.Equal(t, "orders.created", evt.Topic, "event topic mismatch")
 
 		payload, ok := evt.Data.(map[string]any)
 		require.True(t, ok, "event payload should be map[string]any")

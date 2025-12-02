@@ -4,7 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
-	"strings"
+
+	wsutils "user-management/internal/common/wsutils"
 
 	"github.com/coder/websocket"
 )
@@ -25,13 +26,13 @@ func (r *Router) Handle(action string, handler HandlerFunc) {
 	r.Routes[action] = handler
 }
 
-func (r *Router) Dispatch(ctx context.Context, conn *websocket.Conn, msg WSRequest) {
-	handler, ok := r.Routes[strings.ToLower(msg.Method)]
+func (r *Router) Dispatch(ctx context.Context, conn *websocket.Conn, msg wsutils.WSRequest) {
+	handler, ok := r.Routes[msg.Action]
 	if !ok {
-		slog.Warn("Unknown WebSocket action", "action", msg.Method)
+		slog.Warn("Unknown WebSocket action", "action", msg.Action)
 
-		wsmsg := WSMessage{
-			Method:  msg.Method,
+		wsmsg := wsutils.WSMessage{
+			Action:  msg.Action,
 			Success: false,
 			Error:   "unknown action",
 		}
@@ -39,7 +40,7 @@ func (r *Router) Dispatch(ctx context.Context, conn *websocket.Conn, msg WSReque
 		WriteJSON(ctx, conn, wsmsg)
 		return
 	}
-	handler(ctx, conn, msg.Params)
+	handler(ctx, conn, msg.Payload)
 }
 
 func WriteJSON(ctx context.Context, conn *websocket.Conn, v any) {

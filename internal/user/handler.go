@@ -47,7 +47,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.validate.Struct(req); err != nil {
 		details := httputils.ConvertValidationErrors(err)
-		slog.Warn("Failed to create user", "error", "Validation failed")
+		slog.Warn("User update failed", "error", "Validation failed")
 		httputils.WriteDetailedError(w, http.StatusBadRequest, "Validation failed", details, r)
 		return
 	}
@@ -55,7 +55,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	user, err := h.service.CreateUser(r.Context(), &req)
 
 	if err != nil {
-		slog.Error("Failed to create user", "error", err)
+		slog.Error("Failed to create user", "error", r)
 		httputils.WriteError(w, http.StatusInternalServerError, "Failed to create user", r)
 		return
 	}
@@ -149,11 +149,9 @@ func (h *Handler) UpdateUserById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req UserUpdateRequest
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		details := httputils.ConvertValidationErrors(err)
-		slog.Warn("Failed to update user", "error", "Validation failed")
-		httputils.WriteDetailedError(w, http.StatusBadRequest, "Validation failed", details, r)
+	if err := httputils.DecodeAndValidateRequest(r, &req, h.validate); err != nil {
+		slog.Warn("User update failed", "error", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 

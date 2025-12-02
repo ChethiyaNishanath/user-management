@@ -1,15 +1,12 @@
 package app
 
 import (
-	"context"
 	"database/sql"
 	"user-management/internal/db/sqlc"
-	events "user-management/internal/events"
 	"user-management/internal/instrument"
 	"user-management/internal/middleware"
 	"user-management/internal/user"
 	"user-management/internal/validation"
-	ws "user-management/internal/ws"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
@@ -23,28 +20,28 @@ type App struct {
 
 	UserHandler       *user.Handler
 	InstrumentHandler *instrument.Handler
-	WebSocketHandler  *ws.Handler
 }
 
-func NewApp(db *sql.DB, ctx *context.Context) *App {
+func NewApp(db *sql.DB) *App {
 	validate := validator.New()
 	validation.RegisterValidations(validate)
 
 	queries := sqlc.New(db)
-	bus := events.NewBus()
-	connMgr := ws.NewConnectionManager(*ctx)
 
-	websocketModule := ws.NewModule(ctx, connMgr, bus)
-	instrumentModule := instrument.NewModule(queries, validate, connMgr, bus)
-	userModule := user.NewModule(queries, validate)
+	userRepo := user.NewRepository(queries)
+	userService := user.NewService(userRepo)
+	userHandler := user.NewHandler(userService, validate)
+
+	instrumentRepo := instrument.NewRepository(queries)
+	instrumentService := instrument.NewService(instrumentRepo)
+	instrumentHandler := instrument.NewHandler(instrumentService, validate)
 
 	return &App{
 		DB:                db,
 		Validator:         validate,
 		Queries:           queries,
-		UserHandler:       userModule.Handler,
-		InstrumentHandler: instrumentModule.Handler,
-		WebSocketHandler:  websocketModule.Handler,
+		UserHandler:       userHandler,
+		InstrumentHandler: instrumentHandler,
 	}
 }
 
@@ -67,6 +64,4 @@ func (a *App) RegisterRoutes(r chi.Router) {
 		r.Patch("/{id}", a.InstrumentHandler.UpdateInstrumentById)
 		r.Delete("/{id}", a.InstrumentHandler.DeleteInstrumentById)
 	})
-
-	r.Get("/ws", a.WebSocketHandler.HandleWebSocket)
 }

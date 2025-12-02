@@ -39,14 +39,14 @@ func main() {
 
 	config := config.Load()
 
-	slog.SetLogLoggerLevel(slog.LevelDebug)
+	slog.SetLogLoggerLevel(slog.LevelInfo)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	dbConn := db.Connect(config.DBDsn)
 	defer dbConn.Close()
 
-	newApp := app.NewApp(dbConn, &ctx)
+	newApp := app.NewApp(dbConn)
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)

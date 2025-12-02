@@ -11,14 +11,7 @@ func RegisterValidations(validate *validator.Validate) {
 }
 
 func validateUserStatus(fl validator.FieldLevel) bool {
-	statusField := fl.Field()
-
-	userStatus, ok := statusField.Interface().(user.UserStatus)
-	if !ok {
-		return false
-	}
-
-	statusStr := userStatus.String()
-	_, err := user.ParseUserStatus(statusStr)
+	status := fl.Field().String()
+	_, err := user.ParseUserStatus(status)
 	return err == nil
 }

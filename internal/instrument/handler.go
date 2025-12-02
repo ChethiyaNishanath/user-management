@@ -7,22 +7,19 @@ import (
 	"net/http"
 	httputils "user-management/internal/common/httputils"
 	"user-management/internal/middleware"
-	ws "user-management/internal/ws"
 
 	"github.com/go-playground/validator/v10"
 )
 
 type Handler struct {
-	Service  *Service
-	Validate *validator.Validate
-	ConnMgr  *ws.ConnectionManager
+	service  *Service
+	validate *validator.Validate
 }
 
-func NewHandler(service *Service, validate *validator.Validate, connMgr *ws.ConnectionManager) *Handler {
+func NewHandler(service *Service, validate *validator.Validate) *Handler {
 	return &Handler{
-		Service:  service,
-		Validate: validate,
-		ConnMgr:  connMgr,
+		service:  service,
+		validate: validate,
 	}
 }
 
@@ -48,14 +45,14 @@ func (h *Handler) CreateInstrument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.Validate.Struct(req); err != nil {
+	if err := h.validate.Struct(req); err != nil {
 		details := httputils.ConvertValidationErrors(err)
 		slog.Warn("Instrument update failed", "error", "Validation failed")
 		httputils.WriteDetailedError(w, http.StatusBadRequest, "Validation failed", details, r)
 		return
 	}
 
-	instrument, err := h.Service.CreateInstrument(r.Context(), &req)
+	instrument, err := h.service.CreateInstrument(r.Context(), &req)
 
 	if err != nil {
 		slog.Error("Failed to create instrument", "error", r)
@@ -88,7 +85,7 @@ func (h *Handler) GetInstrumentById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	instruments, err := h.Service.GetInstrumentById(r.Context(), instrumentId.String())
+	instruments, err := h.service.GetInstrumentById(r.Context(), instrumentId.String())
 	if err != nil {
 		slog.Warn(fmt.Sprintf("Instrument not found with id: %s", instrumentId))
 		httputils.WriteError(w, http.StatusNotFound, "Instrument not found", r)
@@ -118,7 +115,7 @@ func (h *Handler) GetInstruments(w http.ResponseWriter, r *http.Request) {
 	limit := r.Context().Value(middleware.LimitKey).(int)
 	offset := (page - 1) * limit
 
-	instruments, err := h.Service.ListInstrumentsPaged(r.Context(), limit, offset)
+	instruments, err := h.service.ListInstrumentsPaged(r.Context(), limit, offset)
 	if err != nil {
 		slog.Warn("Failed to fetch instruments")
 		httputils.WriteError(w, http.StatusNotFound, "Failed to fetch instruments", r)
@@ -147,23 +144,22 @@ func (h *Handler) UpdateInstrumentById(w http.ResponseWriter, r *http.Request) {
 
 	instrumentId, uuiderr := httputils.ParseUUIDFromURL(r, "id")
 	if uuiderr != nil {
-		httputils.WriteError(w, http.StatusNotFound, "Invalid instrument ID format", r)
+		http.Error(w, "Invalid instrument ID format", http.StatusNotFound)
 		return
 	}
 
 	var req InstrumentUpdateRequest
-	if err := httputils.DecodeAndValidateRequest(r, &req, h.Validate); err != nil {
-		details := httputils.ConvertValidationErrors(err)
+	if err := httputils.DecodeAndValidateRequest(r, &req, h.validate); err != nil {
 		slog.Warn("Instrument update failed", "error", err)
-		httputils.WriteDetailedError(w, http.StatusBadRequest, "Validation failed", details, r)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	updatedInstrument, err := h.Service.UpdateInstrument(r.Context(), instrumentId.String(), &req, h.ConnMgr)
+	updatedInstrument, err := h.service.UpdateInstrument(r.Context(), instrumentId.String(), &req)
 
 	if err != nil {
 		slog.Warn("Instrument update failed", "error", err)
-		httputils.WriteError(w, http.StatusInternalServerError, err.Error(), r)
+		httputils.WriteError(w, http.StatusInternalServerError, "Instrument update failed", r)
 		return
 	}
 
@@ -189,7 +185,7 @@ func (h *Handler) DeleteInstrumentById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.Service.DeleteInstrumentById(r.Context(), instrumentId.String())
+	err := h.service.DeleteInstrumentById(r.Context(), instrumentId.String())
 	if err != nil {
 		httputils.WriteError(w, http.StatusNotFound, "Failed to fetch instruments", r)
 		return

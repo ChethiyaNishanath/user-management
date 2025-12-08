@@ -11,7 +11,6 @@ import (
 	"strings"
 	"testing"
 	"user-management/internal/app"
-	"user-management/internal/config"
 	"user-management/internal/db"
 	"user-management/internal/user"
 
@@ -26,7 +25,6 @@ import (
 var r *chi.Mux
 
 func TestMain(m *testing.M) {
-	config := config.Load()
 
 	ctx := context.Background()
 
@@ -54,7 +52,12 @@ func TestMain(m *testing.M) {
 		return
 	}
 
-	dbConn := db.Connect(config.DBDsn)
+	connStr, err := postgresContainer.ConnectionString(ctx, "sslmode=disable")
+	if err != nil {
+		slog.Error("failed to get connection string: %v", "error", err)
+	}
+
+	dbConn := db.Connect(connStr)
 	defer dbConn.Close()
 
 	newApp := app.NewApp(dbConn)
